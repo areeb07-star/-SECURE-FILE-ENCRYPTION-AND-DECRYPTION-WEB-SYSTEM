@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encrypt File - Secure File Encryption</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <a href="/" class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>SecureFile</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/encrypt" class="active">Encrypt</a>
+                <a href="/decrypt">Decrypt</a>
+            </div>
+        </nav>
+
+        <!-- Main Card -->
+        <div class="card animate">
+            <div class="card-header">
+                <i class="fas fa-lock" style="color: var(--primary);"></i>
+                <h2>File Encryption</h2>
+            </div>
+
+            <!-- Step 1: Generate Key -->
+            <div class="form-group">
+                <label><i class="fas fa-key"></i> Step 1: Generate Encryption Key</label>
+                <button class="btn btn-primary" onclick="generateKey()" id="generateBtn">
+                    <i class="fas fa-sync-alt"></i> Generate New Key
+                </button>
+            </div>
+
+            <!-- Key Display (Hidden initially) -->
+            <div id="keyContainer" style="display: none;" class="key-container">
+                <label><i class="fas fa-key"></i> Your Encryption Key:</label>
+                <div id="generatedKey" class="key-value"></div>
+                <div class="key-actions">
+                    <button class="btn btn-info" onclick="copyKey()">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button class="btn btn-warning" onclick="saveKey()">
+                        <i class="fas fa-save"></i> Save as File
+                    </button>
+                </div>
+                <div class="alert alert-info" style="margin-top: 15px;">
+                    <i class="fas fa-info-circle"></i>
+                    Save this key! You'll need it to decrypt your file.
+                </div>
+            </div>
+
+            <!-- Step 2: Upload File -->
+            <div class="form-group">
+                <label><i class="fas fa-file"></i> Step 2: Select File to Encrypt</label>
+                <div class="file-input">
+                    <input type="file" id="fileInput" onchange="updateFileName()">
+                    <div class="file-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span id="fileName">Choose a file...</span>
+                    </div>
+                </div>
+                <small style="color: #666; margin-top: 5px; display: block;">
+                    <i class="fas fa-info-circle"></i> Max file size: 50MB
+                </small>
+            </div>
+
+            <!-- Key Input (Alternative) -->
+            <div class="form-group">
+                <label><i class="fas fa-paste"></i> Or Paste Existing Key:</label>
+                <textarea class="form-control" id="keyInput" placeholder="Paste your encryption key here..."></textarea>
+            </div>
+
+            <!-- Encrypt Button -->
+            <button class="btn btn-success" onclick="encryptFile()" id="encryptBtn" disabled>
+                <i class="fas fa-lock"></i> Encrypt File
+            </button>
+
+            <!-- Progress Bar (Hidden) -->
+            <div id="progressContainer" style="display: none; margin-top: 20px;">
+                <div class="progress">
+                    <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                </div>
+                <p id="progressText" style="text-align: center; margin-top: 10px;">Processing...</p>
+            </div>
+
+            <!-- Result Container -->
+            <div id="result" style="display: none; margin-top: 20px;"></div>
+        </div>
+
+        <!-- Quick Tips -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-lightbulb"></i>
+                <h3>Encryption Tips</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <div class="alert alert-info">
+                    <i class="fas fa-save"></i>
+                    <strong>Save your key!</strong> Without it, you cannot decrypt your file.
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-clock"></i>
+                    <strong>Don't share keys</strong> Keep your encryption key private.
+                </div>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>All file types</strong> Images, documents, videos all work.
+                </div>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Lost key = Lost data</strong> We cannot recover your key.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let generatedKey = '';
+        let currentEncryptedFile = '';
+
+        function generateKey() {
+            const btn = document.getElementById('generateBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            btn.disabled = true;
+
+            fetch('/generate-key', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    generatedKey = data.key;
+                    document.getElementById('generatedKey').textContent = data.key;
+                    document.getElementById('keyContainer').style.display = 'block';
+                    document.getElementById('keyInput').value = data.key;
+                    
+                    // Show success message
+                    showAlert('success', 'Key generated successfully! Save it safely.');
+                    
+                    // Enable encrypt button if file is selected
+                    checkEncryptButton();
+                } else {
+                    showAlert('error', 'Failed to generate key: ' + data.error);
+                }
+            })
+            .catch(error => {
+                showAlert('error', 'Error: ' + error);
+            })
+            .finally(() => {
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Generate New Key';
+                btn.disabled = false;
+            });
+        }
+
+        function copyKey() {
+            navigator.clipboard.writeText(generatedKey);
+            showAlert('success', 'Key copied to clipboard!');
+        }
+
+        function saveKey() {
+            const blob = new Blob([generatedKey], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'encryption_key.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('success', 'Key saved as file!');
+        }
+
+        function updateFileName() {
+            const fileInput = document.getElementById('fileInput');
+            const fileName = document.getElementById('fileName');
+            
+            if (fileInput.files.length > 0) {
+                fileName.textContent = fileInput.files[0].name;
+            } else {
+                fileName.textContent = 'Choose a file...';
+            }
+            
+            checkEncryptButton();
+        }
+
+        function checkEncryptButton() {
+            const fileInput = document.getElementById('fileInput');
+            const keyInput = document.getElementById('keyInput');
+            const encryptBtn = document.getElementById('encryptBtn');
+            
+            if (fileInput.files.length > 0 && (generatedKey || keyInput.value.trim())) {
+                encryptBtn.disabled = false;
+            } else {
+                encryptBtn.disabled = true;
+            }
+        }
+
+        document.getElementById('keyInput').addEventListener('input', function() {
+            if (this.value.trim()) {
+                generatedKey = this.value.trim();
+            }
+            checkEncryptButton();
+        });
+
+        function encryptFile() {
+            const fileInput = document.getElementById('fileInput');
+            const key = document.getElementById('keyInput').value.trim() || generatedKey;
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showAlert('error', 'Please select a file');
+                return;
+            }
+            
+            if (!key) {
+                showAlert('error', 'Please generate or paste a key');
+                return;
+            }
+            
+            // Show progress
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('progressBar').style.width = '30%';
+            document.getElementById('progressText').textContent = 'Encrypting file...';
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('key', key);
+            
+            fetch('/encrypt-file', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressText').textContent = 'Complete!';
+                
+                if (data.success) {
+                    currentEncryptedFile = data.encrypted_file;
+                    
+                    const resultDiv = document.getElementById('result');
+                    resultDiv.className = 'alert alert-success';
+                    resultDiv.innerHTML = `
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>✅ Encryption Successful!</strong><br>
+                            File: ${data.original_name}<br>
+                            Size: ${data.file_size}<br>
+                            <button class="btn btn-primary" onclick="downloadFile()" style="margin-top: 10px;">
+                                <i class="fas fa-download"></i> Download Encrypted File
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetForm()" style="margin-top: 10px;">
+                                <i class="fas fa-redo"></i> Encrypt Another
+                            </button>
+                        </div>
+                    `;
+                    resultDiv.style.display = 'flex';
+                    
+                    // Hide progress after 2 seconds
+                    setTimeout(() => {
+                        document.getElementById('progressContainer').style.display = 'none';
+                    }, 2000);
+                } else {
+                    showAlert('error', 'Encryption failed: ' + data.error);
+                    document.getElementById('progressContainer').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                showAlert('error', 'Error: ' + error);
+                document.getElementById('progressContainer').style.display = 'none';
+            });
+        }
+
+        function downloadFile() {
+            window.location.href = '/download/' + currentEncryptedFile;
+        }
+
+        function resetForm() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileName').textContent = 'Choose a file...';
+            document.getElementById('keyInput').value = '';
+            document.getElementById('keyContainer').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('encryptBtn').disabled = true;
+            generatedKey = '';
+            currentEncryptedFile = '';
+        }
+
+        function showAlert(type, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `alert alert-${type}`;
+            resultDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            resultDiv.style.display = 'flex';
+            
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

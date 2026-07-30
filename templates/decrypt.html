@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decrypt File - Secure File Encryption</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <a href="/" class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>SecureFile</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/encrypt">Encrypt</a>
+                <a href="/decrypt" class="active">Decrypt</a>
+            </div>
+        </nav>
+
+        <!-- Main Card -->
+        <div class="card animate">
+            <div class="card-header">
+                <i class="fas fa-unlock-alt" style="color: var(--success);"></i>
+                <h2>File Decryption</h2>
+            </div>
+
+            <!-- Step 1: Select Encrypted File -->
+            <div class="form-group">
+                <label><i class="fas fa-file"></i> Step 1: Select Encrypted File (.enc)</label>
+                <div class="file-input">
+                    <input type="file" id="fileInput" accept=".enc">
+                    <div class="file-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span id="fileName">Choose an encrypted file...</span>
+                    </div>
+                </div>
+                <small style="color: #666; margin-top: 5px; display: block;">
+                    <i class="fas fa-info-circle"></i> Only .enc files are accepted
+                </small>
+            </div>
+
+            <!-- Step 2: Enter Key -->
+            <div class="form-group">
+                <label><i class="fas fa-key"></i> Step 2: Enter Encryption Key</label>
+                <textarea class="form-control" id="keyInput" rows="3" placeholder="Paste your encryption key here..."></textarea>
+                <small class="text-muted">Use the same key that was used to encrypt the file</small>
+            </div>
+
+            <!-- Decrypt Button -->
+            <button class="btn btn-success" onclick="decryptFile()" id="decryptBtn">
+                <i class="fas fa-unlock-alt"></i> Decrypt File
+            </button>
+
+            <!-- Loading Indicator -->
+            <div id="loading" style="display: none; margin-top: 20px; text-align: center;">
+                <i class="fas fa-spinner fa-spin"></i> Decrypting... Please wait.
+            </div>
+
+            <!-- Result Container -->
+            <div id="result" style="display: none; margin-top: 20px;"></div>
+        </div>
+
+        <!-- Tips Card -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-lightbulb"></i>
+                <h3>Decryption Tips</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <div class="alert alert-info">
+                    <i class="fas fa-key"></i>
+                    <strong>Same key required!</strong> You must use the exact key that was used for encryption.
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-file"></i>
+                    <strong>.enc files only</strong> Select the encrypted file ending with .enc
+                </div>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Original file restored</strong> After decryption, you get your original file back.
+                </div>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Wrong key = No file</strong> If the key is incorrect, decryption will fail.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update file name display when file is selected
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const fileName = document.getElementById('fileName');
+            if (this.files && this.files.length > 0) {
+                fileName.textContent = this.files[0].name;
+            } else {
+                fileName.textContent = 'Choose an encrypted file...';
+            }
+        });
+
+        function decryptFile() {
+            const fileInput = document.getElementById('fileInput');
+            const key = document.getElementById('keyInput').value.trim();
+
+            // Validation
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showError('Please select an encrypted file');
+                return;
+            }
+
+            if (!key) {
+                showError('Please enter the encryption key');
+                return;
+            }
+
+            // Check file extension
+            const fileName = fileInput.files[0].name;
+            if (!fileName.endsWith('.enc')) {
+                showError('Please select a valid .enc encrypted file');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('decryptBtn').disabled = true;
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('key', key);
+
+            fetch('/decrypt-file', {
+                method: 'POST',
+                body: formData
+            })
+            .then(async response => {
+                // Check what type of response we got
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    // It's an error message
+                    const data = await response.json();
+                    throw new Error(data.error || 'Decryption failed');
+                }
+                
+                // It's a file - download it
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Try to get filename from response headers
+                const contentDisposition = response.headers.get('content-disposition');
+                let filename = 'decrypted_file';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (match && match[1]) {
+                        filename = match[1].replace(/['"]/g, '');
+                    }
+                }
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                // Hide loading and show success
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('decryptBtn').disabled = false;
+                showSuccess('File decrypted and downloaded successfully!');
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('decryptBtn').disabled = false;
+                showError('Decryption failed: ' + error.message);
+            });
+        }
+
+        function showSuccess(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'alert alert-success';
+            resultDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            resultDiv.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showError(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'alert alert-error';
+            resultDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            resultDiv.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File Encryption System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <a href="/" class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>SecureFile</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="active">Home</a>
+                <a href="/encrypt">Encrypt</a>
+                <a href="/decrypt">Decrypt</a>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="card animate">
+            <div class="card-header">
+                <i class="fas fa-lock"></i>
+                <h2>Secure File Encryption & Decryption</h2>
+            </div>
+            <p style="font-size: 1.2rem; margin-bottom: 30px; color: #666;">
+                Protect your sensitive files with military-grade encryption. 
+                Easy to use, secure, and completely free!
+            </p>
+            <div style="display: flex; gap: 20px; justify-content: center;">
+                <a href="/encrypt" class="btn btn-primary">
+                    <i class="fas fa-lock"></i> Encrypt Files
+                </a>
+                <a href="/decrypt" class="btn btn-success">
+                    <i class="fas fa-unlock"></i> Decrypt Files
+                </a>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                <h3>🔑 Key Generation</h3>
+                <p>Generate secure random keys for file encryption automatically</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-shield"></i>
+                </div>
+                <h3>🛡️ Strong Encryption</h3>
+                <p>Uses AES-128 encryption algorithm (Fernet) for maximum security</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-file"></i>
+                </div>
+                <h3>📁 All File Types</h3>
+                <p>Encrypt any file type - documents, images, videos, and more</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3>⚡ Fast Processing</h3>
+                <p>Quick encryption and decryption even for large files</p>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-cogs"></i>
+                <h2>How It Works</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; text-align: center;">
+                <div>
+                    <div style="background: var(--primary); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-weight: bold;">1</div>
+                    <h4>Generate Key</h4>
+                    <p>Create a unique encryption key for your file</p>
+                </div>
+                <div>
+                    <div style="background: var(--primary); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-weight: bold;">2</div>
+                    <h4>Upload & Encrypt</h4>
+                    <p>Select your file and encrypt it with the key</p>
+                </div>
+                <div>
+                    <div style="background: var(--primary); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-weight: bold;">3</div>
+                    <h4>Download & Share</h4>
+                    <p>Download the encrypted file and share securely</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0;">
+            <div class="card" style="text-align: center;">
+                <i class="fas fa-shield-alt" style="font-size: 3rem; color: var(--primary); margin-bottom: 15px;"></i>
+                <h3 style="color: var(--primary);">AES-128</h3>
+                <p>Encryption Standard</p>
+            </div>
+            <div class="card" style="text-align: center;">
+                <i class="fas fa-clock" style="font-size: 3rem; color: var(--success); margin-bottom: 15px;"></i>
+                <h3 style="color: var(--success);">Real-time</h3>
+                <p>Processing</p>
+            </div>
+            <div class="card" style="text-align: center;">
+                <i class="fas fa-database" style="font-size: 3rem; color: var(--info); margin-bottom: 15px;"></i>
+                <h3 style="color: var(--info);">50MB</h3>
+                <p>Max File Size</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2026 Secure File Encryption & Decryption System |</p>
+            <p style="margin-top: 10px; font-size: 0.9rem;">
+                <i class="fas fa-code"></i> "Lock your data. Own your privacy"
+            </p>
+        </div>
+    </div>
+</body>
+</html>
